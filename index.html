@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="myCanvas" width="480" height="320"></canvas>
+
+<script>
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    var x = canvas.width / 2;
+    var y = canvas.height - 30;
+    var dx = 1;
+    var dy = -1;
+    var ballRadius = 10;
+    var paddleHeight = 10;
+    var paddleWidth = 75;
+    var paddleX = (canvas.width - paddleWidth) / 2;
+    var rightPressed = false;
+    var leftPressed = false;
+    var brickRowCount = 3;
+    var brickColumnCount = 5;
+    var brickWidth = 75;
+    var brickHeight = 30;
+    var brickPadding = 10;
+    var brickOffsetTop = 30;
+    var brickOffsetLeft = 30;
+    var score = 0;
+    var bricks = [];
+    var ballImage = new Image();
+    ballImage.src = "img/soccer.png";
+    var brickImages = [
+        new Image(), 
+        new Image(), 
+        new Image(), 
+        new Image()
+    ];
+
+    brickImages[1].src = "img/zid.png";
+    brickImages[2].src = "img/zid2.png";
+    brickImages[3].src = "img/zid3.png";
+
+    for (var c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for (var r = 0; r < brickRowCount; r++) {
+            bricks[c][r] = {
+                x: 0,
+                y: 0,
+                hitsLeft: 3
+            };
+        }
+    }
+
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+
+    function keyDownHandler(e) {
+        if (e.key === "Right" || e.key === "ArrowRight") {
+            rightPressed = true;
+        } else if (e.key === "Left" || e.key === "ArrowLeft") {
+            leftPressed = true;
+        }
+    }
+
+    function keyUpHandler(e) {
+        if (e.key === "Right" || e.key === "ArrowRight") {
+            rightPressed = false;
+        } else if (e.key === "Left" || e.key === "ArrowLeft") {
+            leftPressed = false;
+        }
+    }
+
+    function drawBall() {
+        var size = ballRadius * 2;
+        ctx.drawImage(ballImage, x - ballRadius, y - ballRadius, size, size);
+    }
+
+    function drawPaddle() {
+        ctx.beginPath();
+        ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawBricks() {
+        for (var c = 0; c < brickColumnCount; c++) {
+            for (var r = 0; r < brickRowCount; r++) {
+                var b = bricks[c][r];
+                if (b.hitsLeft > 0) {
+                    var brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+                    var brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+                    b.x = brickX;
+                    b.y = brickY;
+
+                    let img = brickImages[b.hitsLeft];
+                    let imgDrawHeight = brickHeight * 0.7;
+                    let imgDrawWidth = brickWidth;
+                    let drawY = brickY + (brickHeight - imgDrawHeight) / 2;
+
+                    ctx.drawImage(img, brickX, drawY, imgDrawWidth, imgDrawHeight);
+                }
+            }
+        }
+    }
+
+    function collisionDetection() {
+        let destroyedBricks = 0;
+
+        for (var c = 0; c < brickColumnCount; c++) {
+            for (var r = 0; r < brickRowCount; r++) {
+                var b = bricks[c][r];
+
+                if (b.hitsLeft > 0) {
+                    var brickX = b.x;
+                    var brickY = b.y;
+
+                    // Predict next ball position
+                    var nextX = x + dx;
+                    var nextY = y + dy;
+
+                    if (
+                        nextX + ballRadius > brickX &&
+                        nextX - ballRadius < brickX + brickWidth &&
+                        nextY + ballRadius > brickY &&
+                        nextY - ballRadius < brickY + brickHeight
+                    ) {
+                        // Determine collision side
+                        var prevX = x;
+                        var prevY = y;
+
+                        var collidedFromLeft = prevX + ballRadius <= brickX;
+                        var collidedFromRight = prevX - ballRadius >= brickX + brickWidth;
+                        var collidedFromTop = prevY + ballRadius <= brickY;
+                        var collidedFromBottom = prevY - ballRadius >= brickY + brickHeight;
+
+                        if (collidedFromLeft || collidedFromRight) {
+                            dx = -dx;
+                        } else if (collidedFromTop || collidedFromBottom) {
+                            dy = -dy;
+                        } else {
+                            dy = -dy; // fallback
+                        }
+
+                        b.hitsLeft--;
+                        if (b.hitsLeft === 0) {
+                            score++;
+                        }
+                    }
+                }
+
+                if (b.hitsLeft === 0) {
+                    destroyedBricks++;
+                }
+            }
+        }
+
+        if (destroyedBricks === brickRowCount * brickColumnCount) {
+            alert("You win!");
+            document.location.reload();
+        }
+    }
+
+
+    function drawScore() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText("Score: " + score, 8, 20);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBricks();
+        drawBall();
+        drawPaddle();
+        drawScore();
+        collisionDetection();
+
+        // Bounce off walls
+        if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+            dx = -dx;
+        }
+
+        if (y + dy < ballRadius) {
+            dy = -dy;
+        } else if (y + dy > canvas.height - ballRadius - paddleHeight) {
+            if (x > paddleX && x < paddleX + paddleWidth) {
+                dy = -Math.abs(dy);
+                y = canvas.height - ballRadius - paddleHeight;
+            } else if (y + dy > canvas.height - ballRadius) {
+                document.location.reload();
+            }
+        }
+
+        if (rightPressed && paddleX < canvas.width - paddleWidth) {
+            paddleX += 7;
+        } else if (leftPressed && paddleX > 0) {
+            paddleX -= 7;
+        }
+
+        x += dx;
+        y += dy;
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+</script>
+</body>
+</html>
