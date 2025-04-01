@@ -79,7 +79,7 @@
     function drawPaddle() {
         ctx.beginPath();
         ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-        ctx.fillStyle = "#0095DD";
+        ctx.fillStyle = "#FFFFFF";
         ctx.fill();
         ctx.closePath();
     }
@@ -140,7 +140,7 @@
                         } else if (collidedFromTop || collidedFromBottom) {
                             dy = -dy;
                         } else {
-                            dy = -dy; // fallback
+                            dy = -dy; 
                         }
 
                         b.hitsLeft--;
@@ -165,7 +165,7 @@
 
     function drawScore() {
         ctx.font = "16px Arial";
-        ctx.fillStyle = "#0095DD";
+        ctx.fillStyle = "#FFFFFF";
         ctx.fillText("Score: " + score, 8, 20);
     }
 
