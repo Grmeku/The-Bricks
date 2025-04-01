@@ -11,8 +11,8 @@
     var ctx = canvas.getContext("2d");
     var x = canvas.width / 2;
     var y = canvas.height - 30;
-    var dx = 1;
-    var dy = -1;
+    var dx = 2;
+    var dy = -2;
     var ballRadius = 10;
     var paddleHeight = 10;
     var paddleWidth = 75;
@@ -177,7 +177,6 @@
         drawScore();
         collisionDetection();
 
-        // Bounce off walls
         if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
             dx = -dx;
         }
@@ -189,6 +188,7 @@
                 dy = -Math.abs(dy);
                 y = canvas.height - ballRadius - paddleHeight;
             } else if (y + dy > canvas.height - ballRadius) {
+                alert("GAME OVER");
                 document.location.reload();
             }
         }
