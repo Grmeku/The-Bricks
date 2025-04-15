@@ -11,6 +11,7 @@ so you have to hit each brick 3 times to fully destroy it. Once you destroy all 
 
 SCREEN SHOT
 This is how the game looks:
+
 ![slika](https://github.com/user-attachments/assets/606affa5-96a4-4e30-8c8f-d1c9a15a236e)
 
 
