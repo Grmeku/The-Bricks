@@ -7,14 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    <div id="gameWrapper">
-        <h1 id="gameTitle">Soccer Brick Breaker</h1>
-        <canvas id="myCanvas" width="480" height="320"></canvas>
+    <h1 id="gameTitle">Soccer Brick Breaker</h1>
+    <canvas id="myCanvas" width="600" height="550"></canvas>
 
-        <div id="controls">
-            <button id="startBtn">▶ Start</button>
-            <button id="stopBtn">⏸ Stop</button>
-        </div>
+    <div id="controls">
+        <button id="startBtn">▶ Start</button>
+        <button id="stopBtn">⏸ Stop</button>
     </div>
 
     <div id="creditsAlert">Credits</div>
@@ -22,16 +20,17 @@
     <script>
         const canvas = document.getElementById("myCanvas");
         const ctx = canvas.getContext("2d");
+
         const ballRadius = 10;
         const paddleHeight = 10;
         const paddleWidth = 75;
         const brickRowCount = 3;
         const brickColumnCount = 5;
-        const brickWidth = 75;
-        const brickHeight = 30;
+        const brickWidth = 96;
+        const brickHeight = 70;
         const brickPadding = 10;
-        const brickOffsetTop = 30;
-        const brickOffsetLeft = 30;
+        const brickOffsetTop = 70;
+        const brickOffsetLeft = 40;
 
         let x = canvas.width / 2;
         let y = canvas.height - 30;
@@ -44,10 +43,17 @@
         let score = 0;
         let gameRunning = false;
         let ballAngle = 0;
+
+        let goalActive = false;
+        let goalScored = false;
+
         const bricks = [];
 
         const ballImage = new Image();
         ballImage.src = "img/soccer.png";
+
+        const goalImage = new Image();
+        goalImage.src = "img/goal.png";
 
         const brickImages = [new Image(), new Image(), new Image(), new Image()];
         brickImages[1].src = "img/zid.png";
@@ -112,12 +118,37 @@
             }
         }
 
+        function drawGoal() {
+            const goalWidth = 120;
+            const goalHeight = 60;
+            const goalX = (canvas.width - goalWidth) / 2;
+            const goalY = 40;
+
+            ctx.drawImage(goalImage, goalX, goalY - 35, goalWidth, goalHeight);
+
+            ctx.beginPath();
+            ctx.moveTo(0, goalY + 30);
+            ctx.lineTo(canvas.width, goalY + 30);
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(goalX, goalY - 35);
+            ctx.lineTo(goalX, goalY + goalHeight - 35);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(goalX + goalWidth, goalY - 35);
+            ctx.lineTo(goalX + goalWidth, goalY + goalHeight - 35);
+            ctx.stroke();
+        }
+
         function collisionDetection() {
             let destroyedBricks = 0;
             for (let c = 0; c < brickColumnCount; c++) {
                 for (let r = 0; r < brickRowCount; r++) {
                     const b = bricks[c][r];
-
                     if (b.hitsLeft > 0) {
                         const brickX = b.x;
                         const brickY = b.y;
@@ -147,24 +178,12 @@
                             if (b.hitsLeft === 0) score++;
                         }
                     }
-
                     if (b.hitsLeft === 0) destroyedBricks++;
                 }
             }
 
             if (destroyedBricks === brickRowCount * brickColumnCount) {
-                (async () => {
-                    gameRunning = false;
-                    await Swal.fire({
-                        title: 'You Win!',
-                        text: 'All bricks destroyed!',
-                        icon: 'success',
-                        confirmButtonText: 'Play again',
-                        background: '#333',
-                        color: '#fff'
-                    });
-                    resetGame();
-                })();
+                goalActive = true;
             }
         }
 
@@ -177,6 +196,7 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBricks();
+            drawGoal();
             drawBall();
             drawPaddle();
             drawScore();
@@ -215,14 +235,17 @@
 
                 x += dx;
                 y += dy;
-                ballAngle += 0.1; 
-            }
+                ballAngle += 0.1;
 
-            requestAnimationFrame(draw);
+                requestAnimationFrame(draw);
+            }
         }
 
         document.getElementById("startBtn").addEventListener("click", () => {
-            gameRunning = true;
+            if (!gameRunning) {
+                gameRunning = true;
+                draw();
+            }
         });
 
         document.getElementById("stopBtn").addEventListener("click", () => {
@@ -249,6 +272,8 @@
             paddleX = (canvas.width - paddleWidth) / 2;
             score = 0;
             ballAngle = 0;
+            goalActive = false;
+            goalScored = false;
 
             for (let c = 0; c < brickColumnCount; c++) {
                 for (let r = 0; r < brickRowCount; r++) {
@@ -257,7 +282,10 @@
             }
         }
 
-        draw();
+        // Ensure goal loads and game is ready, but draw starts from Start button
+        goalImage.onload = () => {
+            draw(); // optional draw once to show static elements
+        };
     </script>
 </body>
 </html>
